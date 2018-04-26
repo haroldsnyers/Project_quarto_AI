@@ -7,6 +7,7 @@ import argparse
 import socket
 import sys
 import random
+from random import randint
 import json
 
 from lib import game
@@ -45,10 +46,12 @@ class QuartoState(game.GameState):
     def applymove(self, move):
         # {pos: 8, quarto: true, nextPiece: 2}
         state = self._state['visible']
+        # first step, place the piece that has been chosen by other player
         if state['pieceToPlay'] is not None:
             try:
                 if state['board'][move['pos']] is not None:
                     raise game.InvalidMoveException('The position is not free')
+                # state remaining piece = list of the remaining pieces
                 state['board'][move['pos']] = state['remainingPieces'][state['pieceToPlay']]
                 del (state['remainingPieces'][state['pieceToPlay']])
             except game.InvalidMoveException as e:
@@ -56,6 +59,7 @@ class QuartoState(game.GameState):
             except:
                 raise game.InvalidMoveException("Your move should contain a \"pos\" key in range(16)")
 
+        # choose a piece player to will have to play
         try:
             state['pieceToPlay'] = move['nextPiece']
         except:
@@ -142,7 +146,7 @@ class QuartoServer(game.GameServer):
             self._state.applymove(move)
 
 
-class QuartoClient(game.GameClient):
+class QuartoClientAI(game.GameClient):
     '''Class representing a client for the Quarto game.'''
 
     def __init__(self, name, server, verbose=False):
@@ -151,6 +155,7 @@ class QuartoClient(game.GameClient):
 
     def _handle(self, message):
         pass
+
 
     def _nextmove(self, state):
         visible = state._state['visible']
@@ -175,6 +180,57 @@ class QuartoClient(game.GameClient):
         return json.dumps(move)
 
 
+class QuartoClient(game.GameClient):
+    '''Class representing a client for the Quarto game.'''
+
+    def __init__(self, name, server, verbose=False):
+        super().__init__(server, QuartoState, verbose=verbose)
+        self.__name = name
+
+    def _handle(self, message):
+        pass
+
+    def displayPiece(self, piece):
+        if piece is None:
+            return " " * 6
+        bracket = ('(', ')') if piece['shape'] == "round" else ('[', ']')
+        filling = 'E' if piece['filling'] == 'empty' else 'F'
+        color = 'L' if piece['color'] == 'light' else 'D'
+        format = ' {}{}{}{} ' if piece['height'] == 'low' else '{0}{0}{1}{2}{3}{3}'
+        return format.format(bracket[0], filling, color, bracket[1])
+
+    def _nextmove(self, state):
+        visible = state._state['visible']
+        move = {}
+
+        remainingPieces = visible['remainingPieces']
+        piecetoPlay = visible['pieceToPlay']
+
+        # print piece to play and remainingpieces
+        print('\npieceToPlay:', self.displayPiece(remainingPieces[int(str(piecetoPlay))]),
+              '\n\nremainingPieces:', (", ".join([self.displayPiece(piece) for piece in remainingPieces])), '\n')
+
+        # select the first free position
+        if visible['pieceToPlay'] is not None:
+            move['pos'] = int(input('Position: '))
+
+        # select the first remaining piece
+        move['nextPiece'] = int(input('Next Piece: '))
+
+        # apply the move to check for quarto
+        # applymove will raise if we announce a quarto while there is not
+        move['quarto'] = True
+        try:
+            state.applymove(move)
+
+        except:
+            del (move['quarto'])
+
+        # send the move
+        return json.dumps(move)
+
+
+
 if __name__ == '__main__':
     # Create the top-level parser
     parser = argparse.ArgumentParser(description='Quarto game')
@@ -190,9 +246,17 @@ if __name__ == '__main__':
     client_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
     client_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
     client_parser.add_argument('--verbose', action='store_true')
+    # Create the parser for the 'clientAI' subcommand
+    clientAI_parser = subparsers.add_parser('clientAI', help='launch a client')
+    clientAI_parser.add_argument('name', help='name of the player')
+    clientAI_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
+    clientAI_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
+    clientAI_parser.add_argument('--verbose', action='store_true')
     # Parse the arguments of sys.args
     args = parser.parse_args()
     if args.component == 'server':
         QuartoServer(verbose=args.verbose).run()
+    elif args.component == 'clientAI':
+        QuartoClientAI(args.name, (args.host, args.port), verbose=args.verbose)
     else:
         QuartoClient(args.name, (args.host, args.port), verbose=args.verbose)
