@@ -146,7 +146,7 @@ class QuartoServer(game.GameServer):
             self._state.applymove(move)
 
 
-class QuartoClientAI(game.GameClient):
+class QuartoAI(game.GameClient):
     '''Class representing a client for the Quarto game.'''
 
     def __init__(self, name, server, verbose=False):
@@ -161,12 +161,39 @@ class QuartoClientAI(game.GameClient):
         visible = state._state['visible']
         move = {}
 
-        # select the first free position
-        if visible['pieceToPlay'] is not None:
-            move['pos'] = visible['board'].index(None)
+        remainingPieces = visible['remainingPieces']
+        x = len(remainingPieces)
+        piecetoplay = visible['pieceToPlay']
+        '''shape = piecetoplay['shape']
+        color = piecetoplay['color']
+        height = piecetoplay['height']
+        filling = piecetoplay['filling']'''
 
-        # select the first remaining piece
-        move['nextPiece'] = 0
+        # function that compares the features of 2 pieces
+        def _same(self, feature, elems):
+
+            try:
+                elems = list(map(lambda piece: piecetoplay[feature], elems))
+            except:
+                return False
+            print('SAME:\nelems: {}\nfeature: {}'.format(elems, feature))
+            return all(e == elems[0] for e in elems)
+
+        # select next piece to play if you are first to play
+        if visible['pieceToPlay'] is None:
+            move['nextPiece'] = randint(0, x-1)
+
+        # select a free position
+        if visible['pieceToPlay'] is not None:
+            # first turn of the game, AI places the first piece on the game
+            if x == 16:
+                move['pos'] = randint(0, 15)
+                move['nextPiece'] = randint(0, x - 1)
+                '''move['pos'] = visible['board'].index(None)'''
+            # second turn of the game
+            if x = 15:
+                 
+
 
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
@@ -180,7 +207,7 @@ class QuartoClientAI(game.GameClient):
         return json.dumps(move)
 
 
-class QuartoClient(game.GameClient):
+class QuartoPlayer(game.GameClient):
     '''Class representing a client for the Quarto game.'''
 
     def __init__(self, name, server, verbose=False):
@@ -241,22 +268,22 @@ if __name__ == '__main__':
     server_parser.add_argument('--port', help='port to listen on (default: 5000)', default=5000)
     server_parser.add_argument('--verbose', action='store_true')
     # Create the parser for the 'client' subcommand
-    client_parser = subparsers.add_parser('client', help='launch a client')
-    client_parser.add_argument('name', help='name of the player')
-    client_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
-    client_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
-    client_parser.add_argument('--verbose', action='store_true')
+    player_parser = subparsers.add_parser('player', help='launch a client')
+    player_parser.add_argument('name', help='name of the player')
+    player_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
+    player_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
+    player_parser.add_argument('--verbose', action='store_true')
     # Create the parser for the 'clientAI' subcommand
-    clientAI_parser = subparsers.add_parser('clientAI', help='launch a client')
-    clientAI_parser.add_argument('name', help='name of the player')
-    clientAI_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
-    clientAI_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
-    clientAI_parser.add_argument('--verbose', action='store_true')
+    AI_parser = subparsers.add_parser('AI', help='launch a client')
+    AI_parser.add_argument('name', help='name of the player')
+    AI_parser.add_argument('--host', help='hostname of the server (default: localhost)', default='127.0.0.1')
+    AI_parser.add_argument('--port', help='port of the server (default: 5000)', default=5000)
+    AI_parser.add_argument('--verbose', action='store_true')
     # Parse the arguments of sys.args
     args = parser.parse_args()
     if args.component == 'server':
         QuartoServer(verbose=args.verbose).run()
-    elif args.component == 'clientAI':
-        QuartoClientAI(args.name, (args.host, args.port), verbose=args.verbose)
+    elif args.component == 'AI':
+        QuartoAI(args.name, (args.host, args.port), verbose=args.verbose)
     else:
-        QuartoClient(args.name, (args.host, args.port), verbose=args.verbose)
+        QuartoPlayer(args.name, (args.host, args.port), verbose=args.verbose)
