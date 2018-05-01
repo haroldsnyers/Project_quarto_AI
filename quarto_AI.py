@@ -153,9 +153,9 @@ class QuartoAI(game.GameClient):
         super().__init__(server, QuartoState, verbose=verbose)
         self.__name = name
 
+
     def _handle(self, message):
         pass
-
 
     def _nextmove(self, state):
         visible = state._state['visible']
@@ -163,21 +163,7 @@ class QuartoAI(game.GameClient):
 
         remainingPieces = visible['remainingPieces']
         x = len(remainingPieces)
-        piecetoplay = visible['pieceToPlay']
-        '''shape = piecetoplay['shape']
-        color = piecetoplay['color']
-        height = piecetoplay['height']
-        filling = piecetoplay['filling']'''
-
-        # function that compares the features of 2 pieces
-        def _same(self, feature, elems):
-
-            try:
-                elems = list(map(lambda piece: piecetoplay[feature], elems))
-            except:
-                return False
-            print('SAME:\nelems: {}\nfeature: {}'.format(elems, feature))
-            return all(e == elems[0] for e in elems)
+        # piecetoplay = visible['peaceToPlay']
 
         # select next piece to play if you are first to play
         if visible['pieceToPlay'] is None:
@@ -191,8 +177,10 @@ class QuartoAI(game.GameClient):
                 move['nextPiece'] = randint(0, x - 1)
                 '''move['pos'] = visible['board'].index(None)'''
             # second turn of the game
-            if x = 15:
-                 
+            """if x == 15:
+                for i in remainingPieces[piecetoplay]:
+                    if i ="""
+
 
 
         # apply the move to check for quarto
