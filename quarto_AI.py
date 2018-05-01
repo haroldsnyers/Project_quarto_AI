@@ -153,21 +153,49 @@ class QuartoAI(game.GameClient):
         super().__init__(server, QuartoState, verbose=verbose)
         self.__name = name
 
-
     def _handle(self, message):
         pass
 
     def _nextmove(self, state):
+        def _read(board):
+            dicoRead = {}
+            for i in range(len(board)):
+                dicoRead[i] = board[i]
+            return dicoRead
+
         visible = state._state['visible']
         move = {}
 
         remainingPieces = visible['remainingPieces']
         x = len(remainingPieces)
-        # piecetoplay = visible['peaceToPlay']
+        piecetoplay = visible['pieceToPlay']
+
+        """boardfeature = {"rows": {1: [0, 1, 2, 3], 2: [4, 5, 6, 7], 3: [8, 9, 10, 11], 4: [12, 13, 14, 15]},
+                        "colons": {'a': [0, 4, 8, 12], 'b': [1, 5, 9, 13], 'c': [2, 6, 10, 14], 'd': [3, 7, 11, 15]},
+                        "diagonals": {"A": [0, 5, 10, 15], 'B': [3, 6, 9, 12]}
+                        }"""
+
+        boardfeature = {0: {"row": {1: [1, 2, 3]}, "colons": {1: [4, 8, 12]}, "diagonals": {1: [5, 10, 15]}},
+                        1: {"row": {1: [0, 2, 3]}, "colons": {2: [5, 9, 13]}, "diagonals": None},
+                        2: {"row": {1: [0, 1, 3]}, "colons": {3: [6, 10, 14]}, "diagonals": None},
+                        3: {"row": {1: [0, 1, 2]}, "colons": {4: [7, 11, 15]}, "diagonals": {2: [6, 9, 12]}},
+                        4: {"row": {2: [5, 6, 7]}, "colons": {1: [0, 8, 12]}, "diagonals": None},
+                        5: {"row": {2: [4, 6, 7]}, "colons": {2: [1, 9, 13]}, "diagonals": {1: [0, 10, 15]}},
+                        6: {"row": {2: [4, 5, 7]}, "colons": {3: [2, 10, 14]}, "diagonals": {2: [3, 9, 12]}},
+                        7: {"row": {2: [4, 5, 6]}, "colons": {4: [3, 11, 15]}, "diagonals": None},
+                        8: {"row": {3: [9, 10, 11]}, "colons": {1: [0, 4, 12]}, "diagonals": None},
+                        9: {"row": {3: [8, 10, 11]}, "colons": {2: [1, 5, 13]}, "diagonals": {2: [3, 6, 12]}},
+                        10: {"row": {3: [8, 9, 11]}, "colons": {3: [2, 6, 14]}, "diagonals": {1: [0, 5, 15]}},
+                        11: {"row": {3: [8, 9, 10]}, "colons": {4: [3, 7, 15]}, "diagonals": None},
+                        12: {"row": {4: [13, 14, 15]}, "colons": {1: [0, 4, 8]}, "diagonals": {2: [3, 6, 9]}},
+                        13: {"row": {4: [12, 14, 15]}, "colons": {2: [1, 5, 9]}, "diagonals": None},
+                        14: {"row": {4: [12, 13, 15]}, "colons": {3: [2, 6, 10]}, "diagonals": None},
+                        15: {"row": {4: [12, 13, 14]}, "colons": {4: [3, 7, 11]}, "diagonals": {1: [0, 5, 10]}}
+                        }
 
         # select next piece to play if you are first to play
         if visible['pieceToPlay'] is None:
-            move['nextPiece'] = randint(0, x-1)
+            move['nextPiece'] = randint(0, x - 1)
 
         # select a free position
         if visible['pieceToPlay'] is not None:
@@ -177,11 +205,54 @@ class QuartoAI(game.GameClient):
                 move['nextPiece'] = randint(0, x - 1)
                 '''move['pos'] = visible['board'].index(None)'''
             # second turn of the game
-            """if x == 15:
-                for i in remainingPieces[piecetoplay]:
-                    if i ="""
+            if x == 15:
+                posPiece = 0
 
+                def nbrcara(para):
+                    # for i in remainingPieces[int(str(piecetoplay))]:
+                    for data in para.values():
+                        if data is not None:
+                            print(_read(visible['board']))
+                            print(data)
+                            print(remainingPieces[int(str(piecetoplay))])
+                            keys_a = set(data.values())
+                            keys_b = set(remainingPieces[int(str(piecetoplay))].values())
+                            intersection = keys_a & keys_b
+                            nombre = len(intersection)
+                            print(intersection)
+                            print(nombre)
+                            return nombre
 
+                for i in range(16):
+                    if visible['board'][i] is not None:
+                        posPiece = i
+                print(posPiece)
+
+                def posliste(pos):
+                    # {"row": {1: [1, 2, 3]}, "colons": {1: [4, 8, 12]}, "diagonals": {1: [5, 10, 15]}}
+                    allignement = []
+                    posdic1 = boardfeature[pos]["row"].values()
+                    posdic2 = boardfeature[pos]["colons"].values()
+                    if boardfeature[pos]["diagonals"].value() is not None:
+                        posdic3 = boardfeature[pos]["diagonals"].value()
+                        allignement.append(posdic3)
+                    else:
+                        posdic3 = []
+                        allignement.append(posdic3)
+                    allignement.append(posdic1)
+                    allignement.append(posdic2)
+                    return allignement
+
+                boarddata = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+                if nbrcara(_read(visible['board'])) < 2:
+                    list = set(boarddata) - set(posliste(posPiece))
+                    move['pos'] = random.choice(list)
+                    move['nextPiece'] = randint(0, x - 1)
+
+                else:
+                    move['pos'] = randint(posliste(posPiece))
+                    move['nextPiece'] = randint(0, x - 1)
 
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
@@ -243,7 +314,6 @@ class QuartoPlayer(game.GameClient):
 
         # send the move
         return json.dumps(move)
-
 
 
 if __name__ == '__main__':

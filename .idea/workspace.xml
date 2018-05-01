@@ -18,8 +18,8 @@
       <file leaf-file-name="quarto_AI.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/quarto_AI.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="299">
-              <caret line="165" column="8" lean-forward="true" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
+            <state relative-caret-position="391">
+              <caret line="186" column="110" lean-forward="true" selection-start-line="186" selection-start-column="110" selection-end-line="186" selection-end-column="110" />
               <folding>
                 <element signature="e#87#102#0" expanded="true" />
               </folding>
@@ -71,9 +71,9 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="96" />
-    <option name="y" value="1531" />
-    <option name="width" value="1552" />
+    <option name="x" value="157" />
+    <option name="y" value="1475" />
+    <option name="width" value="1553" />
     <option name="height" value="840" />
   </component>
   <component name="ProjectView">
@@ -521,8 +521,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/quarto_AI.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="299">
-          <caret line="165" column="8" lean-forward="true" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
+        <state relative-caret-position="391">
+          <caret line="186" column="110" lean-forward="true" selection-start-line="186" selection-start-column="110" selection-end-line="186" selection-end-column="110" />
           <folding>
             <element signature="e#87#102#0" expanded="true" />
           </folding>
