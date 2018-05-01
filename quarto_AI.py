@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # quarto.py
+# Server
 # Author: Quentin Lurkin
 # Version: March 29, 2018
+# client AI and player
+# Author: Harold Snyers & Alexandre Seynaeve
+# version: 
 
 import argparse
 import socket
@@ -157,6 +161,7 @@ class QuartoAI(game.GameClient):
         pass
 
     def _nextmove(self, state):
+        # gives a dictionary containing all the position on the board with their state, state stands here for
         def _read(board):
             dicoRead = {}
             for i in range(len(board)):
@@ -165,7 +170,6 @@ class QuartoAI(game.GameClient):
 
         visible = state._state['visible']
         move = {}
-
         remainingPieces = visible['remainingPieces']
         x = len(remainingPieces)
         piecetoplay = visible['pieceToPlay']
@@ -174,23 +178,23 @@ class QuartoAI(game.GameClient):
                         "colons": {'a': [0, 4, 8, 12], 'b': [1, 5, 9, 13], 'c': [2, 6, 10, 14], 'd': [3, 7, 11, 15]},
                         "diagonals": {"A": [0, 5, 10, 15], 'B': [3, 6, 9, 12]}
                         }"""
-
-        boardfeature = {0: {"row": {1: [1, 2, 3]}, "colons": {1: [4, 8, 12]}, "diagonals": {1: [5, 10, 15]}},
-                        1: {"row": {1: [0, 2, 3]}, "colons": {2: [5, 9, 13]}, "diagonals": None},
-                        2: {"row": {1: [0, 1, 3]}, "colons": {3: [6, 10, 14]}, "diagonals": None},
-                        3: {"row": {1: [0, 1, 2]}, "colons": {4: [7, 11, 15]}, "diagonals": {2: [6, 9, 12]}},
-                        4: {"row": {2: [5, 6, 7]}, "colons": {1: [0, 8, 12]}, "diagonals": None},
-                        5: {"row": {2: [4, 6, 7]}, "colons": {2: [1, 9, 13]}, "diagonals": {1: [0, 10, 15]}},
-                        6: {"row": {2: [4, 5, 7]}, "colons": {3: [2, 10, 14]}, "diagonals": {2: [3, 9, 12]}},
-                        7: {"row": {2: [4, 5, 6]}, "colons": {4: [3, 11, 15]}, "diagonals": None},
-                        8: {"row": {3: [9, 10, 11]}, "colons": {1: [0, 4, 12]}, "diagonals": None},
-                        9: {"row": {3: [8, 10, 11]}, "colons": {2: [1, 5, 13]}, "diagonals": {2: [3, 6, 12]}},
-                        10: {"row": {3: [8, 9, 11]}, "colons": {3: [2, 6, 14]}, "diagonals": {1: [0, 5, 15]}},
-                        11: {"row": {3: [8, 9, 10]}, "colons": {4: [3, 7, 15]}, "diagonals": None},
-                        12: {"row": {4: [13, 14, 15]}, "colons": {1: [0, 4, 8]}, "diagonals": {2: [3, 6, 9]}},
-                        13: {"row": {4: [12, 14, 15]}, "colons": {2: [1, 5, 9]}, "diagonals": None},
-                        14: {"row": {4: [12, 13, 15]}, "colons": {3: [2, 6, 10]}, "diagonals": None},
-                        15: {"row": {4: [12, 13, 14]}, "colons": {4: [3, 7, 11]}, "diagonals": {1: [0, 5, 10]}}
+        # structure for each position on the board
+        boardfeature = {0: {"row": [1, 2, 3], "colons": [4, 8, 12], "diagonals": [5, 10, 15]},
+                        1: {"row": [0, 2, 3], "colons": [5, 9, 13], "diagonals": []},
+                        2: {"row": [0, 1, 3], "colons": [6, 10, 14], "diagonals": []},
+                        3: {"row": [0, 1, 2], "colons": [7, 11, 15], "diagonals": [6, 9, 12]},
+                        4: {"row": [5, 6, 7], "colons": [0, 8, 12], "diagonals": []},
+                        5: {"row": [4, 6, 7], "colons": [1, 9, 13], "diagonals": [0, 10, 15]},
+                        6: {"row": [4, 5, 7], "colons": [2, 10, 14], "diagonals": [3, 9, 12]},
+                        7: {"row": [4, 5, 6], "colons": [3, 11, 15], "diagonals": []},
+                        8: {"row": [9, 10, 11], "colons": [0, 4, 12], "diagonals": []},
+                        9: {"row": [8, 10, 11], "colons": [1, 5, 13], "diagonals": [3, 6, 12]},
+                        10: {"row": [8, 9, 11], "colons": [2, 6, 14], "diagonals": [0, 5, 15]},
+                        11: {"row": [8, 9, 10], "colons": [3, 7, 15], "diagonals": []},
+                        12: {"row": [13, 14, 15], "colons": [0, 4, 8], "diagonals": [3, 6, 9]},
+                        13: {"row": [12, 14, 15], "colons": [1, 5, 9], "diagonals": []},
+                        14: {"row": [12, 13, 15], "colons": [2, 6, 10], "diagonals": []},
+                        15: {"row": [12, 13, 14], "colons": [3, 7, 11], "diagonals": [0, 5, 10]}
                         }
 
         # select next piece to play if you are first to play
@@ -199,15 +203,34 @@ class QuartoAI(game.GameClient):
 
         # select a free position
         if visible['pieceToPlay'] is not None:
-            # first turn of the game, AI places the first piece on the game
+            # first turn of the game,
+            # if player or opponent isn't placing the first piece, AI will place the first piece on the game
             if x == 16:
                 move['pos'] = randint(0, 15)
                 move['nextPiece'] = randint(0, x - 1)
                 '''move['pos'] = visible['board'].index(None)'''
             # second turn of the game
+            # 1 piece is already on board.
             if x == 15:
                 posPiece = 0
 
+                # makes a list with some positions explicitly chosen,
+                # those are in relation with the position of the piece on the board
+                def posliste(pos):
+                    allignement = []
+                    posdic1 = boardfeature[pos]["row"]
+                    posdic2 = boardfeature[pos]["colons"]
+                    posdic3 = boardfeature[pos]["diagonals"]
+                    for elem in posdic1:
+                        allignement.append(elem)
+                    for elem in posdic2:
+                        allignement.append(elem)
+                    for elem in posdic3:
+                        allignement.append(elem)
+                    return allignement
+
+                # calculates number of common characteristics the piece on the board and
+                # the 'nextpiecetoplay' have in common
                 def nbrcara(para):
                     # for i in remainingPieces[int(str(piecetoplay))]:
                     for data in para.values():
@@ -223,35 +246,25 @@ class QuartoAI(game.GameClient):
                             print(nombre)
                             return nombre
 
+                # determines on which position the piece is on the board
                 for i in range(16):
                     if visible['board'][i] is not None:
                         posPiece = i
-                print(posPiece)
+                    print(posPiece)
 
-                def posliste(pos):
-                    # {"row": {1: [1, 2, 3]}, "colons": {1: [4, 8, 12]}, "diagonals": {1: [5, 10, 15]}}
-                    allignement = []
-                    posdic1 = boardfeature[pos]["row"].values()
-                    posdic2 = boardfeature[pos]["colons"].values()
-                    if boardfeature[pos]["diagonals"].value() is not None:
-                        posdic3 = boardfeature[pos]["diagonals"].value()
-                        allignement.append(posdic3)
-                    else:
-                        posdic3 = []
-                        allignement.append(posdic3)
-                    allignement.append(posdic1)
-                    allignement.append(posdic2)
-                    return allignement
-
+                # all the positions possible on the board
                 boarddata = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
+                # making a choice in function of the number of common characteristics
                 if nbrcara(_read(visible['board'])) < 2:
-                    list = set(boarddata) - set(posliste(posPiece))
-                    move['pos'] = random.choice(list)
+                    possibilities = filter(lambda x: x not in boarddata, posliste(posPiece))
+                    print("pos is" + str(possibilities))
+                    move['pos'] = random.choice(possibilities)
                     move['nextPiece'] = randint(0, x - 1)
 
                 else:
-                    move['pos'] = randint(posliste(posPiece))
+                    print("posliste" + str(posliste(posPiece)))
+                    move['pos'] = random.choice(posliste(posPiece))
                     move['nextPiece'] = randint(0, x - 1)
 
         # apply the move to check for quarto
