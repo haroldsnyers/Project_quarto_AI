@@ -5,7 +5,7 @@
 # Version: March 29, 2018
 # client AI and player
 # Author: Harold Snyers & Alexandre Seynaeve
-# version: 
+# version:
 
 import argparse
 import socket
@@ -231,15 +231,14 @@ class QuartoAI(game.GameClient):
 
                 # calculates number of common characteristics the piece on the board and
                 # the 'nextpiecetoplay' have in common
-                def nbrcara(para):
-                    # for i in remainingPieces[int(str(piecetoplay))]:
+                def nbrcara(para, piece):
                     for data in para.values():
                         if data is not None:
                             print(_read(visible['board']))
                             print(data)
                             print(remainingPieces[int(str(piecetoplay))])
                             keys_a = set(data.values())
-                            keys_b = set(remainingPieces[int(str(piecetoplay))].values())
+                            keys_b = set(piece.values())
                             intersection = keys_a & keys_b
                             nombre = len(intersection)
                             print(intersection)
@@ -252,20 +251,50 @@ class QuartoAI(game.GameClient):
                         posPiece = i
                     print(posPiece)
 
+                def nbrcara1(para, data):
+                    for piece in para:
+                        keys_a = set(piece.values())
+                        keys_b = set(data.values())
+                        intersection = keys_a & keys_b
+                        nombre = len(intersection)
+                        return nombre
+
+                def listpiece(nbr1, nbr2):
+                    nextpieces =[]
+                    for piece in remainingPieces:
+                        for i in range(15):
+                            if nbrcara1(piece, remainingPieces[int(str(piecetoplay))]) == nbr1:
+                                if nbrcara(_read(visible['board']), piece) == nbr2:
+                                    nextpieces.append(i)
+                    return nextpieces
+
+
+
                 # all the positions possible on the board
                 boarddata = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
                 # making a choice in function of the number of common characteristics
-                if nbrcara(_read(visible['board'])) < 2:
+                if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) < 2:
                     possibilities = filter(lambda x: x not in boarddata, posliste(posPiece))
                     print("pos is" + str(possibilities))
                     move['pos'] = random.choice(possibilities)
-                    move['nextPiece'] = randint(0, x - 1)
+                    # number of common characteristics equals 3
+                    if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 0:
+                        move['nextPiece'] = random.choice(listpiece(3, 1))
+                    # number of common characteristics equals 1
+                    else:
+                        move['nextPiece'] = random.choice(listpiece(2, 1))
+
 
                 else:
                     print("posliste" + str(posliste(posPiece)))
                     move['pos'] = random.choice(posliste(posPiece))
-                    move['nextPiece'] = randint(0, x - 1)
+                    # number of common characteristics equals 2
+                    if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 2:
+                        move['nextPiece'] = random.choice(listpiece(1, 0))
+                    # number of common characteristics equals 3
+                    else:
+                        move['nextPiece'] = random.choice(listpiece(2, 2))
 
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
@@ -306,7 +335,7 @@ class QuartoPlayer(game.GameClient):
         piecetoPlay = visible['pieceToPlay']
 
         # print piece to play and remainingpieces
-        print('\npieceToPlay:', self.displayPiece(remainingPieces[int(str(piecetoPlay))]),
+        print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay]),
               '\n\nremainingPieces:', (", ".join([self.displayPiece(piece) for piece in remainingPieces])), '\n')
 
         # select the first free position
