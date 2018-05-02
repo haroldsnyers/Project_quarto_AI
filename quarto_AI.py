@@ -234,38 +234,49 @@ class QuartoAI(game.GameClient):
                 def nbrcara(para, piece):
                     for data in para.values():
                         if data is not None:
-                            print(_read(visible['board']))
-                            print(data)
-                            print(remainingPieces[int(str(piecetoplay))])
+                            # print("this is" + str(data))
+                            # print(_read(visible['board']))
+                            # print(data)
+                            # print(remainingPieces[int(str(piecetoplay))])
                             keys_a = set(data.values())
                             keys_b = set(piece.values())
                             intersection = keys_a & keys_b
                             nombre = len(intersection)
-                            print(intersection)
-                            print(nombre)
+                            # print(intersection)
+                            # print(nombre)
                             return nombre
+
+                def nbrcara1(piece, data):
+                    print("this is piece" + str(piece))
+                    keys_a = set(piece.values())
+                    keys_b = set(data.values())
+                    intersection = keys_a & keys_b
+                    nombre = len(intersection)
+                    return nombre
 
                 # determines on which position the piece is on the board
                 for i in range(16):
                     if visible['board'][i] is not None:
                         posPiece = i
-                    print(posPiece)
-
-                def nbrcara1(para, data):
-                    for piece in para:
-                        keys_a = set(piece.values())
-                        keys_b = set(data.values())
-                        intersection = keys_a & keys_b
-                        nombre = len(intersection)
-                        return nombre
+                    print("this is pospiece" +str(posPiece))
 
                 def listpiece(nbr1, nbr2):
+                    # there is an error yet to solve, namely that because remainingpieces contains piecetoplay,
+                    # i is the position of the old list of remainingpiece with the nextpiecetoplay but that position
+                    # is given at the next turn which means the remainingpiecelist has changed,
+                    # old piece to play has been removed. Problem is that piecetoplay has a random position in that list
+                    # which means we cannot rectify it just by i-1 because it could be true for some positions but not
+                    # all of them, all the positions smaller than the position of piecetoplay are correct
                     nextpieces =[]
+                    i = 0
                     for piece in remainingPieces:
-                        for i in range(15):
-                            if nbrcara1(piece, remainingPieces[int(str(piecetoplay))]) == nbr1:
-                                if nbrcara(_read(visible['board']), piece) == nbr2:
-                                    nextpieces.append(i)
+                        print("this" + str(piece))
+                        print(nbrcara1(piece, remainingPieces[int(str(piecetoplay))]))
+                        print(nbrcara(_read(visible['board']), piece))
+                        if nbrcara1(piece, remainingPieces[int(str(piecetoplay))]) == nbr1:
+                            if nbr2+1 >= nbrcara(_read(visible['board']), piece) >= nbr2:
+                                nextpieces.append(i)
+                        i += 1
                     return nextpieces
 
 
@@ -275,14 +286,20 @@ class QuartoAI(game.GameClient):
 
                 # making a choice in function of the number of common characteristics
                 if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) < 2:
-                    possibilities = filter(lambda x: x not in boarddata, posliste(posPiece))
+                    possibilities = list(filter(lambda x: x not in boarddata, posliste(posPiece)))
                     print("pos is" + str(possibilities))
                     move['pos'] = random.choice(possibilities)
                     # number of common characteristics equals 3
                     if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 0:
+                        # will choose a piece which will have 3 common characteristics with the last piece played and
+                        # 1 or 2 with the piece which was first played
+                        print("this is listpiece(3, 1)" + str(listpiece(3, 1)))
                         move['nextPiece'] = random.choice(listpiece(3, 1))
                     # number of common characteristics equals 1
                     else:
+                        # will choose a piece which will have 2 common characteristics with the last piece played and
+                        # 1 or 2 with the piece which was first played
+                        print("this is listpiece(2, 1)" + str(listpiece(2, 1)))
                         move['nextPiece'] = random.choice(listpiece(2, 1))
 
 
@@ -291,9 +308,15 @@ class QuartoAI(game.GameClient):
                     move['pos'] = random.choice(posliste(posPiece))
                     # number of common characteristics equals 2
                     if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 2:
-                        move['nextPiece'] = random.choice(listpiece(1, 0))
+                        # will choose a piece which will have 1 common characteristics with the last piece played and
+                        # 0 or 1 with the piece which was first played or the contrary
+                        print("this is listpiece(1, 0)" +str(listpiece(1, 0)))
+                        move['nextPiece'] = random.choice(listpiece(1, 0) or listpiece(0, 1))
                     # number of common characteristics equals 3
                     else:
+                        # will choose a piece which will have 2 common characteristics with the last piece played and
+                        # 2 or 3 with the piece which was first played
+                        print("this is listpiece(2, 2)" + str(listpiece(2, 2)))
                         move['nextPiece'] = random.choice(listpiece(2, 2))
 
         # apply the move to check for quarto
@@ -335,6 +358,10 @@ class QuartoPlayer(game.GameClient):
         piecetoPlay = visible['pieceToPlay']
 
         # print piece to play and remainingpieces
+        print(piecetoPlay)
+        # error occurs sometimes, namely a TypeError which says list indices must be integers or slices, not NoneType
+        # for this part of the print print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay])
+        # which means that piecetoplay is sometimes a Nonetype, how or when?
         print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay]),
               '\n\nremainingPieces:', (", ".join([self.displayPiece(piece) for piece in remainingPieces])), '\n')
 
