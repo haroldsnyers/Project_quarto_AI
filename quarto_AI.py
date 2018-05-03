@@ -13,6 +13,7 @@ import sys
 import random
 from random import randint
 import json
+import copy
 
 from lib import game
 
@@ -168,11 +169,28 @@ class QuartoAI(game.GameClient):
                 dicoRead[i] = board[i]
             return dicoRead
 
+        # determines on which position the piece is on the board
+        def token():
+            link = []
+            for i in range(16):
+                if visible['board'][i] is not None:
+                    link.append(i)
+            return link
+
+        # determines on which position the piece are not on the bord
+        def nottoken():
+            notlink = []
+            for i in range(16):
+                if visible['board'][i] is None:
+                    notlink.append(i)
+            return notlink
+
         visible = state._state['visible']
         move = {}
+        piecetoplay = visible['pieceToPlay']
         remainingPieces = visible['remainingPieces']
         x = len(remainingPieces)
-        piecetoplay = visible['pieceToPlay']
+
 
         """boardfeature = {"rows": {1: [0, 1, 2, 3], 2: [4, 5, 6, 7], 3: [8, 9, 10, 11], 4: [12, 13, 14, 15]},
                         "colons": {'a': [0, 4, 8, 12], 'b': [1, 5, 9, 13], 'c': [2, 6, 10, 14], 'd': [3, 7, 11, 15]},
@@ -269,17 +287,17 @@ class QuartoAI(game.GameClient):
                     # all of them, all the positions smaller than the position of piecetoplay are correct
                     nextpieces =[]
                     i = 0
-                    for piece in remainingPieces:
-                        print("this" + str(piece))
-                        print(nbrcara1(piece, remainingPieces[int(str(piecetoplay))]))
-                        print(nbrcara(_read(visible['board']), piece))
+                    remainingPieces_copy = copy.deepcopy(remainingPieces)
+                    remainingPieces_copy.remove(remainingPieces[piecetoplay])
+                    for piece in remainingPieces_copy:
+                        # print("this" + str(piece))
+                        # print(nbrcara1(piece, remainingPieces[piecetoplay]))
+                        # print(nbrcara(_read(visible['board']), piece))
                         if nbrcara1(piece, remainingPieces[int(str(piecetoplay))]) == nbr1:
                             if nbr2+1 >= nbrcara(_read(visible['board']), piece) >= nbr2:
                                 nextpieces.append(i)
                         i += 1
                     return nextpieces
-
-
 
                 # all the positions possible on the board
                 boarddata = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -302,7 +320,6 @@ class QuartoAI(game.GameClient):
                         print("this is listpiece(2, 1)" + str(listpiece(2, 1)))
                         move['nextPiece'] = random.choice(listpiece(2, 1))
 
-
                 else:
                     print("posliste" + str(posliste(posPiece)))
                     move['pos'] = random.choice(posliste(posPiece))
@@ -319,6 +336,97 @@ class QuartoAI(game.GameClient):
                         print("this is listpiece(2, 2)" + str(listpiece(2, 2)))
                         move['nextPiece'] = random.choice(listpiece(2, 2))
 
+            if x == 14:
+                posPiece = 0
+
+                boarddata2 = nottoken()  # qui change en fonction du temps
+                print(boarddata2)
+
+                def posliste(pos):
+                    allignement = []
+                    allignementbis = []
+                    for data in pos:
+                        posdic1 = boardfeature[data]["row"]
+                        posdic2 = boardfeature[data]["colons"]
+                        posdic3 = boardfeature[data]["diagonals"]
+                        for elem in posdic1:
+                            allignementbis.append(elem)
+                        for elem in posdic2:
+                            allignementbis.append(elem)
+                        for elem in posdic3:
+                            allignementbis.append(elem)
+                    for i in allignementbis:
+                        if i not in allignement:
+                            allignement.append(i)
+                    arrangement = list(filter(lambda x: x not in allignement, allignementbis))
+                    arrangement2 = list(filter(lambda x: x not in allignement, arrangement))
+                    result = [allignement, arrangement, arrangement2]
+                    print("allignement" + str(allignement))
+                    return result
+
+                    # def to take the number of common car en the bord
+
+                def count(cara):
+                    keys_a = []
+                    for data in cara:
+                        if data is not None:
+                            keys_a.append(data)
+                    piece1 = keys_a[0]
+                    piece2 = keys_a[1]
+                    # print("piece1:" + str(piece1))
+                    # print("piece2:" + str(piece2))
+                    lista1 = set(piece1.values())
+                    listb1 = set(piece2.values())
+                    listc1 = set(remainingPieces[piecetoplay].values())
+                    # print("lista1:" + str(lista1))
+                    # print("listb1:" + str(listb1))
+                    # print("listc1:" + str(listc1))
+                    intersection0 = lista1 & listb1
+                    intersection1 = listc1 & lista1
+                    intersection2 = listc1 & listb1
+                    # print("intersection0:" + str(intersection0))
+                    # print("intersection1:" + str(intersection1))
+                    # print("intersection2:" + str(intersection2))
+                    nombre0 = len(intersection0)
+                    nombre1 = len(intersection1)
+                    nombre2 = len(intersection2)
+                    number = [nombre0, nombre1, nombre2]
+                    print("number" + str(number))
+                    return number
+                    # (number = (Common Cara of the 2 piece on bord, Common Cara of one of the pieces on
+                    # the bord an the piece to play, Common Cara of the other piece on the
+                    # bord an the piece to play).
+
+                if count(visible['board'])[0] == 0:  # nombre de cara entre les pièce sur plateau
+                    possibilities = list(filter(lambda x: x not in boarddata2, posliste(token())[0]))
+                    print("pos is" + str(possibilities))
+                    move['pos'] = random.choice(possibilities)
+                    move['nextPiece'] = randint(0, x - 1)
+
+                if count(visible['board'])[0] == 1:  # nombre en commun de cara entre les pièces sur plateau
+                    if count(visible['board'])[1] >= 1 and count(visible['board'])[2] >= 1:  # toute la même cara en commun ATTAK
+                        possibilities = posliste(token())[1]
+                        print("pos is" + str(possibilities))
+                        move['pos'] = random.choice(possibilities)
+                        move['nextPiece'] = randint(0, x - 1)
+                    if count(visible['board'])[1] == 1 or count(visible['board'])[2] == 1:  # au moin une cara en commun
+                        possibilities = posliste(token())[2]
+                        print("pos is" + str(possibilities))
+                        move['pos'] = random.choice(possibilities)
+                        move['nextPiece'] = randint(0, x - 1)
+
+                if count(visible['board'])[0] >= 2:  # nombre de cara entre les pièce sur plateau
+                    if count(visible['board'])[1] >= 1 and count(visible['board'])[2] >= 1:  #
+                        possibilities = posliste(token())[1]  # a revoir
+                        print("pos is" + str(possibilities))
+                        move['pos'] = random.choice(possibilities)
+                        move['nextPiece'] = randint(0, x - 1)
+                    if (count(visible['board'])[1] == 1 and not count(visible['board'])[2] == 1) \
+                            or (count(visible['board'])[2] == 1 and not count(visible['board'])[1] == 1):  # (a and not b) or (not a and b)
+                        possibilities = posliste(token())[1]  # a revoir
+                        print("pos is" + str(possibilities))
+                        move['pos'] = random.choice(possibilities)
+                        move['nextPiece'] = randint(0, x - 1)
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
         move['quarto'] = True
@@ -351,26 +459,37 @@ class QuartoPlayer(game.GameClient):
         return format.format(bracket[0], filling, color, bracket[1])
 
     def _nextmove(self, state):
+        def _read(board):
+            dicoReadbis = []
+            for i in range(len(board)):
+                dicoRead = {}
+                dicoRead[i] = board[i]
+                dicoReadbis.append(dicoRead)
+            return dicoReadbis
+
         visible = state._state['visible']
         move = {}
 
         remainingPieces = visible['remainingPieces']
         piecetoPlay = visible['pieceToPlay']
-
-        # print piece to play and remainingpieces
-        print(piecetoPlay)
-        # error occurs sometimes, namely a TypeError which says list indices must be integers or slices, not NoneType
-        # for this part of the print print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay])
-        # which means that piecetoplay is sometimes a Nonetype, how or when?
-        print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay]),
-              '\n\nremainingPieces:', (", ".join([self.displayPiece(piece) for piece in remainingPieces])), '\n')
+        remainingPieces_copy = copy.deepcopy(remainingPieces)
 
         # select the first free position
         if visible['pieceToPlay'] is not None:
+            remainingPieces_copy.remove(remainingPieces[piecetoPlay])
+            print('\npieceToPlay:', self.displayPiece(remainingPieces[piecetoPlay]),
+                  '\n\nremainingPieces:',
+                  (", ".join([self.displayPiece(piece) for piece in remainingPieces_copy])),
+                  '\n')
             move['pos'] = int(input('Position: '))
+            move['nextPiece'] = int(input('Next Piece: '))
 
-        # select the first remaining piece
-        move['nextPiece'] = int(input('Next Piece: '))
+        if visible['pieceToPlay'] is None:
+            print('\nremainingPieces:', (", ".join([self.displayPiece(piece) for piece in remainingPieces])),
+                  '\n')
+            move['nextPiece'] = int(input('Next Piece: '))
+
+
 
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
