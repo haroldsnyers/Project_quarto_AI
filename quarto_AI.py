@@ -162,7 +162,8 @@ class QuartoAI(game.GameClient):
         pass
 
     def _nextmove(self, state):
-        # gives a dictionary containing all the position on the board with their state, state stands here for
+        # gives a dictionary containing all the position on the board with their state, state stands here for if the
+        # position is free. If it's free, then the state = None otherwise we have the characteristics of the piece
         def _read(board):
             dicoRead = {}
             for i in range(len(board)):
@@ -177,7 +178,7 @@ class QuartoAI(game.GameClient):
                     link.append(i)
             return link
 
-        # determines on which position the piece are not on the bord
+        # determines on which position the piece are not on the board
         def nottoken():
             notlink = []
             for i in range(16):
@@ -191,11 +192,6 @@ class QuartoAI(game.GameClient):
         remainingPieces = visible['remainingPieces']
         x = len(remainingPieces)
 
-
-        """boardfeature = {"rows": {1: [0, 1, 2, 3], 2: [4, 5, 6, 7], 3: [8, 9, 10, 11], 4: [12, 13, 14, 15]},
-                        "colons": {'a': [0, 4, 8, 12], 'b': [1, 5, 9, 13], 'c': [2, 6, 10, 14], 'd': [3, 7, 11, 15]},
-                        "diagonals": {"A": [0, 5, 10, 15], 'B': [3, 6, 9, 12]}
-                        }"""
         # structure for each position on the board
         boardfeature = {0: {"row": [1, 2, 3], "colons": [4, 8, 12], "diagonals": [5, 10, 15]},
                         1: {"row": [0, 2, 3], "colons": [5, 9, 13], "diagonals": []},
@@ -216,56 +212,50 @@ class QuartoAI(game.GameClient):
                         }
 
         # select next piece to play if you are first to play
+        # first to play means, choose the first piece which will be played and that he is player 1
         if visible['pieceToPlay'] is None:
             move['nextPiece'] = randint(0, x - 1)
 
-        # select a free position
         if visible['pieceToPlay'] is not None:
-            # first turn of the game,
-            # if player or opponent isn't placing the first piece, AI will place the first piece on the game
+            # There are no pieces on the board
+            # AI is playing second, he is the first one to place a piece on the board and he is player 2
             if x == 16:
                 move['pos'] = randint(0, 15)
                 move['nextPiece'] = randint(0, x - 1)
-                '''move['pos'] = visible['board'].index(None)'''
-            # second turn of the game
+
             # 1 piece is already on board.
+            # move for player 1
             if x == 15:
                 posPiece = 0
 
-                # makes a list with some positions explicitly chosen,
-                # those are in relation with the position of the piece on the board
                 def posliste(pos):
-                    allignement = []
+                    # makes a list of all the positions related to the position of piece already laying on the board
+                    alignment = []
                     posdic1 = boardfeature[pos]["row"]
                     posdic2 = boardfeature[pos]["colons"]
                     posdic3 = boardfeature[pos]["diagonals"]
                     for elem in posdic1:
-                        allignement.append(elem)
+                        alignment.append(elem)
                     for elem in posdic2:
-                        allignement.append(elem)
+                        alignment.append(elem)
                     for elem in posdic3:
-                        allignement.append(elem)
-                    return allignement
+                        alignment.append(elem)
+                    return alignment
 
-                # calculates number of common characteristics the piece on the board and
-                # the 'nextpiecetoplay' have in common
                 def nbrcara(para, piece):
+                    # returns the number of common characteristics between 2 pieces
+                    # This function is when para is a dictionary of dictionaries
                     for data in para.values():
                         if data is not None:
-                            # print("this is" + str(data))
-                            # print(_read(visible['board']))
-                            # print(data)
-                            # print(remainingPieces[int(str(piecetoplay))])
                             keys_a = set(data.values())
                             keys_b = set(piece.values())
                             intersection = keys_a & keys_b
                             nombre = len(intersection)
-                            # print(intersection)
-                            # print(nombre)
                             return nombre
 
                 def nbrcara1(piece, data):
-                    print("this is piece" + str(piece))
+                    # Returns the number of common characteristics between 2 pieces
+                    # This function is when piece is just a dictionary
                     keys_a = set(piece.values())
                     keys_b = set(data.values())
                     intersection = keys_a & keys_b
@@ -279,20 +269,12 @@ class QuartoAI(game.GameClient):
                     print("this is pospiece" +str(posPiece))
 
                 def listpiece(nbr1, nbr2):
-                    # there is an error yet to solve, namely that because remainingpieces contains piecetoplay,
-                    # i is the position of the old list of remainingpiece with the nextpiecetoplay but that position
-                    # is given at the next turn which means the remainingpiecelist has changed,
-                    # old piece to play has been removed. Problem is that piecetoplay has a random position in that list
-                    # which means we cannot rectify it just by i-1 because it could be true for some positions but not
-                    # all of them, all the positions smaller than the position of piecetoplay are correct
+                    # returns a list of all the possibilities which satisfy the conditions for the nextpiece to play
                     nextpieces =[]
                     i = 0
                     remainingPieces_copy = copy.deepcopy(remainingPieces)
                     remainingPieces_copy.remove(remainingPieces[piecetoplay])
                     for piece in remainingPieces_copy:
-                        # print("this" + str(piece))
-                        # print(nbrcara1(piece, remainingPieces[piecetoplay]))
-                        # print(nbrcara(_read(visible['board']), piece))
                         if nbrcara1(piece, remainingPieces[int(str(piecetoplay))]) == nbr1:
                             if nbr2+1 >= nbrcara(_read(visible['board']), piece) >= nbr2:
                                 nextpieces.append(i)
@@ -304,10 +286,10 @@ class QuartoAI(game.GameClient):
 
                 # making a choice in function of the number of common characteristics
                 if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) < 2:
-                    possibilities = list(filter(lambda x: x not in boarddata, posliste(posPiece)))
+                    possibilities = list(filter(lambda x: x not in posliste(posPiece), boarddata))
                     print("pos is" + str(possibilities))
                     move['pos'] = random.choice(possibilities)
-                    # number of common characteristics equals 3
+                    # number of common characteristics equals 0
                     if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 0:
                         # will choose a piece which will have 3 common characteristics with the last piece played and
                         # 1 or 2 with the piece which was first played
@@ -321,6 +303,7 @@ class QuartoAI(game.GameClient):
                         move['nextPiece'] = random.choice(listpiece(2, 1))
 
                 else:
+
                     print("posliste" + str(posliste(posPiece)))
                     move['pos'] = random.choice(posliste(posPiece))
                     # number of common characteristics equals 2
@@ -336,93 +319,94 @@ class QuartoAI(game.GameClient):
                         print("this is listpiece(2, 2)" + str(listpiece(2, 2)))
                         move['nextPiece'] = random.choice(listpiece(2, 2))
 
+            # 2 pieces already on the board
+            # move for player 2
             if x == 14:
-                posPiece = 0
 
-                boarddata2 = nottoken()  # qui change en fonction du temps
-                print(boarddata2)
+                boarddata2 = nottoken()  # boarddata changes in the current of the game
 
                 def posliste(pos):
-                    allignement = []
-                    allignementbis = []
+                    # returns a list of lists
+                    # (result = [all the positions in alignment to at least one of the positions of the pieces on the
+                    # board, , all the positions in alignment with the 2 pieces on the board, all the positions in
+                    # alignment with just 1 piece on the board)
+                    alignment = []
+                    alignmentbis = []
+                    arrangement = []
                     for data in pos:
                         posdic1 = boardfeature[data]["row"]
                         posdic2 = boardfeature[data]["colons"]
                         posdic3 = boardfeature[data]["diagonals"]
                         for elem in posdic1:
-                            allignementbis.append(elem)
+                            alignmentbis.append(elem)
                         for elem in posdic2:
-                            allignementbis.append(elem)
+                            alignmentbis.append(elem)
                         for elem in posdic3:
-                            allignementbis.append(elem)
-                    for i in allignementbis:
-                        if i not in allignement:
-                            allignement.append(i)
-                    arrangement = list(filter(lambda x: x not in allignement, allignementbis))
-                    arrangement2 = list(filter(lambda x: x not in allignement, arrangement))
-                    result = [allignement, arrangement, arrangement2]
-                    print("allignement" + str(allignement))
+                            alignmentbis.append(elem)
+                    for i in alignmentbis:
+                        if i not in alignment:
+                            alignment.append(i)
+                        else:
+                            arrangement.append(i)
+                    arrangement2 = list(filter(lambda x: x not in arrangement, alignment))
+                    result = [alignment, arrangement, arrangement2]
                     return result
 
-                    # def to take the number of common car en the bord
-
                 def count(cara):
+                    # returns a list of lists
+                    # (number = (Common Cara of the 2 piece on the board, Common Cara of one of the pieces on the board
+                    # and the piece to play, Common Cara of the other piece on the board an the piece to play).
                     keys_a = []
                     for data in cara:
                         if data is not None:
                             keys_a.append(data)
                     piece1 = keys_a[0]
                     piece2 = keys_a[1]
-                    # print("piece1:" + str(piece1))
-                    # print("piece2:" + str(piece2))
                     lista1 = set(piece1.values())
                     listb1 = set(piece2.values())
                     listc1 = set(remainingPieces[piecetoplay].values())
-                    # print("lista1:" + str(lista1))
-                    # print("listb1:" + str(listb1))
-                    # print("listc1:" + str(listc1))
                     intersection0 = lista1 & listb1
                     intersection1 = listc1 & lista1
                     intersection2 = listc1 & listb1
-                    # print("intersection0:" + str(intersection0))
-                    # print("intersection1:" + str(intersection1))
-                    # print("intersection2:" + str(intersection2))
                     nombre0 = len(intersection0)
                     nombre1 = len(intersection1)
                     nombre2 = len(intersection2)
                     number = [nombre0, nombre1, nombre2]
                     print("number" + str(number))
                     return number
-                    # (number = (Common Cara of the 2 piece on bord, Common Cara of one of the pieces on
-                    # the bord an the piece to play, Common Cara of the other piece on the
-                    # bord an the piece to play).
 
-                if count(visible['board'])[0] == 0:  # nombre de cara entre les pièce sur plateau
+                if count(visible['board'])[0] == 0:
+                    # number of common characteristics between the 2 pieces on the board equals 0
                     possibilities = list(filter(lambda x: x not in boarddata2, posliste(token())[0]))
                     print("pos is" + str(possibilities))
                     move['pos'] = random.choice(possibilities)
                     move['nextPiece'] = randint(0, x - 1)
 
-                if count(visible['board'])[0] == 1:  # nombre en commun de cara entre les pièces sur plateau
-                    if count(visible['board'])[1] >= 1 and count(visible['board'])[2] >= 1:  # toute la même cara en commun ATTAK
+                if count(visible['board'])[0] == 1:
+                    # number of common characteristics between the 2 pieces on the board equals 0
+                    if count(visible['board'])[1] >= 1 and count(visible['board'])[2] >= 1:
+                        # attack mode
+                        # conditions must be improved because it doesn't what we really want
+                        # the if just below does the same thing except it's only for 1 common cara ...
                         possibilities = posliste(token())[1]
                         print("pos is" + str(possibilities))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = randint(0, x - 1)
-                    if count(visible['board'])[1] == 1 or count(visible['board'])[2] == 1:  # au moin une cara en commun
+                    if count(visible['board'])[1] == 1 or count(visible['board'])[2] == 1:
                         possibilities = posliste(token())[2]
                         print("pos is" + str(possibilities))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = randint(0, x - 1)
 
-                if count(visible['board'])[0] >= 2:  # nombre de cara entre les pièce sur plateau
+                if count(visible['board'])[0] >= 2:
                     if count(visible['board'])[1] >= 1 and count(visible['board'])[2] >= 1:  #
                         possibilities = posliste(token())[1]  # a revoir
                         print("pos is" + str(possibilities))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = randint(0, x - 1)
                     if (count(visible['board'])[1] == 1 and not count(visible['board'])[2] == 1) \
-                            or (count(visible['board'])[2] == 1 and not count(visible['board'])[1] == 1):  # (a and not b) or (not a and b)
+                            or (count(visible['board'])[2] == 1 and not count(visible['board'])[1] == 1):
+                        # (a and not b) or (not a and b)
                         possibilities = posliste(token())[1]  # a revoir
                         print("pos is" + str(possibilities))
                         move['pos'] = random.choice(possibilities)
