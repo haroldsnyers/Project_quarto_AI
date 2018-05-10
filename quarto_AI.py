@@ -8,15 +8,18 @@
 # version:
 
 import argparse
-import socket
-import sys
 import random
-from random import randint
+import time
 import json
 import copy
+import datetime
 
+from random import randint
+from easyAI import TwoPlayersGame, AI_Player
+from easyAI.AI import Negamax, TT, solving
 from lib import game
 
+server_time = []
 
 class QuartoState(game.GameState):
     '''Class representing a state for the Quarto game.'''
@@ -137,6 +140,7 @@ class QuartoState(game.GameState):
                 print(self.displayPiece(state['board'][row * 4 + col]), end="|")
             print()
 
+        print("00 01 02 03", '\n04 05 06 07', '\n08 09 10 11', '\n12 13 14 15\n')
         print('\nRemaining Pieces:')
         print(", ".join([self.displayPiece(piece) for piece in state['remainingPieces']]))
 
@@ -144,9 +148,24 @@ class QuartoState(game.GameState):
             print('\nPiece to Play:')
             print(self.displayPiece(state['remainingPieces'][state['pieceToPlay']]))
 
+        global server_time
+        print('\nTimer:')
+        self.timer(server_time)
+
     def nextPlayer(self):
         self._state['currentPlayer'] = (self._state['currentPlayer'] + 1) % 2
 
+    def timer(self, old_time):
+        old_time.append(time.time())
+        if len(old_time) == 1:
+            print('start')
+        else:
+            delta = old_time[-1] - old_time[-2]
+            total = old_time[-1] - old_time[0]
+            time_delta = str(datetime.timedelta(seconds=delta))
+            time_total = str(datetime.timedelta(seconds=total))
+            print('Player {} play in: {}'.format(self._state['currentPlayer'], time_delta))
+            print('total execution time: {}'.format(time_total))
 
 class QuartoServer(game.GameServer):
     '''Class representing a server for the Quarto game.'''
