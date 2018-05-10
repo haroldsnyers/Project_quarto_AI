@@ -475,7 +475,7 @@ class QuartoAI(game.GameClient):
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] == count(visible['board'])[2]:
                         print("posL" + str(posliste(token())[0]))
-                        possibilities = posliste(token())[0]
+                        possibilities = posliste(token())[1]
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     else:
@@ -499,9 +499,18 @@ class QuartoAI(game.GameClient):
                     else:
                         print("posL" + str(posliste(token())[0]))
                         # change poss in filter alligment to 1 piece
-                        possibilities = posliste(token())[1]
-                        move['pos'] = random.choice(possibilities)
-                        move['nextPiece'] = match(master(_read1(visible['board'])))
+                        if count(visible['board'])[1] > count(visible['board'])[2]:
+                            possibilities = list(filter(lambda x: x not in posliste(token())[1], posliste(token0())[0]))
+                            move['pos'] = random.choice(possibilities)
+                            move['nextPiece'] = match(master(_read1(visible['board'])))
+                        elif count(visible['board'])[1] == count(visible['board'])[2]:
+                            possibilities = posliste(token())[1]
+                            move['pos'] = random.choice(possibilities)
+                            move['nextPiece'] = match(master(_read1(visible['board'])))
+                        else:
+                            possibilities = list(filter(lambda x: x not in posliste(token())[1], posliste(token1())[0]))
+                            move['pos'] = random.choice(possibilities)
+                            move['nextPiece'] = match(master(_read1(visible['board'])))
 
                 elif count(visible['board'])[0] == 2:  # nombre en commun de cara entre les pièces sur plateau
                     if count(visible['board'])[1] == 0:
@@ -570,6 +579,11 @@ class QuartoAI(game.GameClient):
                         possibilities = list(filter(lambda x: x not in posliste(token())[0], boarddata2))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
+
+            if x <= 13:
+                move['pos'] = random.choice(nottoken())
+                move['nextPiece'] = randint(0, x - 1)
+
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
         move['quarto'] = True
