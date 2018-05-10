@@ -602,8 +602,8 @@ class QuartoAI(game.GameClient):
 
             if x <= 13:
                 QuartoMind.ttentry = lambda self: state
-                quarto_algo_neg = Negamax(5)
-                quarto_algo_sss = SSS(5)
+                quarto_algo_neg = Negamax(10, tt=TT(), win_score=90)
+                quarto_algo_sss = SSS(10)
                 Quarto = QuartoMind([AI_Player(quarto_algo_neg), AI_Player(quarto_algo_sss)], state)
                 print(str(Quarto.get_move()))
                 move = Quarto.get_move()
@@ -644,8 +644,8 @@ class QuartoMind(TwoPlayersGame):
                     move['quarto'] = True
                     if visible['board'][i] is None:
                         try:
-                            # CopyState = copy.deepcopy(self.State)
-                            self.State.applymove(move)
+                            CopyState = copy.deepcopy(self.State)
+                            CopyState.applymove(move)
                         except:
                             del (move['quarto'])
                         liste.append(move)
@@ -667,7 +667,13 @@ class QuartoMind(TwoPlayersGame):
         self.State.prettyprint()
 
     def scoring(self):
-        return 100 if self.win() else 0
+        Score = self.win()
+        if Score == self.nopponent:
+            return 100
+        if Score in [-1]:
+            return 0
+        else:
+            return -100
 
 
 class QuartoPlayer(game.GameClient):
