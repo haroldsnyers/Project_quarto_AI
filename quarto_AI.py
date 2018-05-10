@@ -16,7 +16,7 @@ import datetime
 
 from random import randint
 from easyAI import TwoPlayersGame, AI_Player
-from easyAI.AI import Negamax, TT, solving
+from easyAI.AI import Negamax, TT, solving, SSS
 from lib import game
 
 server_time = []
@@ -141,6 +141,7 @@ class QuartoState(game.GameState):
             print()
 
         print("00 01 02 03", '\n04 05 06 07', '\n08 09 10 11', '\n12 13 14 15\n')
+
         print('\nRemaining Pieces:')
         print(", ".join([self.displayPiece(piece) for piece in state['remainingPieces']]))
 
@@ -600,8 +601,13 @@ class QuartoAI(game.GameClient):
                         move['nextPiece'] = match(master(_read1(visible['board'])))
 
             if x <= 13:
-                move['pos'] = random.choice(nottoken())
-                move['nextPiece'] = randint(0, x - 1)
+                QuartoMind.ttentry = lambda self: state
+                quarto_algo_neg = Negamax(5)
+                quarto_algo_sss = SSS(5)
+                Quarto = QuartoMind([AI_Player(quarto_algo_neg), AI_Player(quarto_algo_sss)], state)
+                print(str(Quarto.get_move()))
+                move = Quarto.get_move()
+
 
         # apply the move to check for quarto
         # applymove will raise if we announce a quarto while there is not
@@ -613,6 +619,55 @@ class QuartoAI(game.GameClient):
 
         # send the move
         return json.dumps(move)
+
+
+# easyAI
+class QuartoMind(TwoPlayersGame):
+    def __init__(self, players, State):
+        self.State = State
+        self.players = players
+        self.nplayer = 1
+
+    def possible_moves(self):
+        liste = []
+        visible = self.State._state['visible']
+
+        if visible['board'].count(None) == 1:  # si il n'y a plus qu'une place sur le plateau joue la derniere piece
+            liste.append({'pos': visible['board'].index(None), 'nextPiece': 0})
+
+        else:
+            for i in range(16):
+                for n in range(len(visible['remainingPieces']) - 1):
+                    move = {}
+                    move['pos'] = i
+                    move['nextPiece'] = n
+                    move['quarto'] = True
+                    if visible['board'][i] is None:
+                        try:
+                            # CopyState = copy.deepcopy(self.State)
+                            self.State.applymove(move)
+                        except:
+                            del (move['quarto'])
+                        liste.append(move)
+        return liste
+
+    def make_move(self, move):
+        position = move['pos']
+        visible = self.State._state['visible']
+        if visible['board'][position] is None:
+            self.State.applymove(move)
+
+    def win(self):
+        return self.State.winner()
+
+    def is_over(self):
+        return False if self.win() == -1 else True
+
+    def show(self):
+        self.State.prettyprint()
+
+    def scoring(self):
+        return 100 if self.win() else 0
 
 
 class QuartoPlayer(game.GameClient):
