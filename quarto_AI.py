@@ -17,6 +17,8 @@ import datetime
 from random import randint
 from easyAI import TwoPlayersGame, AI_Player
 from easyAI.AI import Negamax, TT, solving, SSS
+from easyAI.AI.solving import id_solve
+from easyAI.AI.MTdriver import mt, mtd
 from lib import game
 
 server_time = []
@@ -202,7 +204,7 @@ class QuartoAI(game.GameClient):
                 dicoRead[i] = board[i]
             return dicoRead
 
-        # determines on which position the piece is on the board
+        # returns a list of the position on the board which are taken
         def token():
             link = []
             for i in range(16):
@@ -210,7 +212,7 @@ class QuartoAI(game.GameClient):
                     link.append(i)
             return link
 
-        # determines on which position the piece are not on the board
+        # returns a list of the free positions on the board
         def nottoken():
             notlink = []
             for i in range(16):
@@ -218,12 +220,14 @@ class QuartoAI(game.GameClient):
                     notlink.append(i)
             return notlink
 
+        # returns a list of the position of the first piece on the board
         def token0():
             list = []
             i = token()[0]
             list.append(i)
             return list
 
+        # returns a list of the position of the second piece on the board
         def token1():
             list = []
             i = token()[1]
@@ -312,7 +316,6 @@ class QuartoAI(game.GameClient):
                 for i in range(16):
                     if visible['board'][i] is not None:
                         posPiece = i
-                    print("this is pospiece" +str(posPiece))
 
                 def listpiece(nbr1, nbr2):
                     # returns a list of all the possibilities which satisfy the conditions for the nextpiece to play
@@ -333,36 +336,29 @@ class QuartoAI(game.GameClient):
                 # making a choice in function of the number of common characteristics
                 if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) < 2:
                     possibilities = list(filter(lambda x: x not in posliste(posPiece), boarddata))
-                    print("pos is" + str(possibilities))
                     move['pos'] = random.choice(possibilities)
                     # number of common characteristics equals 0
                     if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 0:
                         # will choose a piece which will have 3 common characteristics with the last piece played and
                         # 1 or 2 with the piece which was first played
-                        print("this is listpiece(3, 1)" + str(listpiece(3, 1)))
                         move['nextPiece'] = random.choice(listpiece(3, 1))
                     # number of common characteristics equals 1
                     else:
                         # will choose a piece which will have 2 common characteristics with the last piece played and
                         # 1 or 2 with the piece which was first played
-                        print("this is listpiece(2, 1)" + str(listpiece(2, 1)))
                         move['nextPiece'] = random.choice(listpiece(2, 1))
 
                 else:
-
-                    print("posliste" + str(posliste(posPiece)))
                     move['pos'] = random.choice(posliste(posPiece))
                     # number of common characteristics equals 2
                     if nbrcara(_read(visible['board']), remainingPieces[int(str(piecetoplay))]) == 2:
                         # will choose a piece which will have 1 common characteristics with the last piece played and
                         # 0 or 1 with the piece which was first played or the contrary
-                        print("this is listpiece(1, 0)" +str(listpiece(1, 0)))
                         move['nextPiece'] = random.choice(listpiece(1, 0) or listpiece(0, 1))
                     # number of common characteristics equals 3
                     else:
                         # will choose a piece which will have 2 common characteristics with the last piece played and
                         # 2 or 3 with the piece which was first played
-                        print("this is listpiece(2, 2)" + str(listpiece(2, 2)))
                         move['nextPiece'] = random.choice(listpiece(2, 2))
 
             # 2 pieces already on the board
@@ -419,10 +415,11 @@ class QuartoAI(game.GameClient):
                     nombre1 = len(intersection1)
                     nombre2 = len(intersection2)
                     number = [nombre0, nombre1, nombre2]
-                    # print("number" + str(number))
                     return number
 
                 def _read1(board):
+                    # same function as _read but here it returns a list of the pieces on the
+                    # board without their positions. It returns a list of dictionaries
                     dicoRead = []
                     for i in board:
                         if i is not None:
@@ -431,7 +428,8 @@ class QuartoAI(game.GameClient):
                     return dicoRead
 
                 def master(liste):
-                    print("liste is" + str(liste))
+                    # returns the characteristics of the piece which will be played by the opponent inf function
+                    # of the pieces already on the board
                     roundi = 0
                     squarei = 0
                     darki = 0
@@ -442,9 +440,7 @@ class QuartoAI(game.GameClient):
                     fulli = 0
                     piecetoplay = {}
                     for piece in liste:
-                        print(piece)
                         for car in piece:
-                            print(car)
                             if piece[car] == 'round':
                                 roundi += 1
                             if piece[car] == 'square':
@@ -461,7 +457,6 @@ class QuartoAI(game.GameClient):
                                 emptyi += 1
                             if piece[car] == 'full':
                                 fulli += 1
-                    print([roundi, squarei, darki, lighti, lowi, highi, emptyi, fulli])
                     if roundi < squarei:
                         piecetoplay.update({'shape': 'round'})
                     else:
@@ -478,135 +473,153 @@ class QuartoAI(game.GameClient):
                         piecetoplay.update({'filling': 'empty'})
                     else:
                         piecetoplay.update({'filling': 'full'})
-                    print(piecetoplay)
                     return piecetoplay
 
                 def match(piece2play):
+                    # returns the index of the piece in remainingPieces which matches the characteristics of the piece
+                    # returned in master
                     remainingPieces_copy = copy.deepcopy(remainingPieces)
                     remainingPieces_copy.remove(remainingPieces[piecetoplay])
                     for i in range(len(remainingPieces_copy)):
                         if remainingPieces_copy[i] == piece2play:
                             return i
 
-                if count(visible['board'])[0] == 0:  # nombre de cara entre les pièce sur plateau
+                # choices for the position and nextpiece are made here after
+
+                # number of common characteristics between the pieces on the board equals 0
+                if count(visible['board'])[0] == 0:
+                    # comparison between the common characteristics of each piece on the board and the piecetoplay
                     if count(visible['board'])[1] > count(visible['board'])[2]:
-                        possibilities = posliste(token0())[0]
+                        possibilities = posliste(token0())[0]   # in alignment with the first piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] == count(visible['board'])[2]:
-                        print("posL" + str(posliste(token())[0]))
-                        possibilities = posliste(token())[1]
+                        possibilities = posliste(token())[1]    # in alignment with the two pieces on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     else:
-                        print("posl" + str(posliste(token1())[0]))
-                        possibilities = posliste(token1())[0]
+                        possibilities = posliste(token1())[0]   # in alignment with the second piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
 
-                elif count(visible['board'])[0] == 1:  # nombre de cara entre les pièce sur plateau
+                # number of common characteristics between the pieces on the board equals 1
+                elif count(visible['board'])[0] == 1:
+                    # comparison between the common characteristics of each piece on the board and the piecetoplay
                     if count(visible['board'])[1] == 0 and count(visible['board'])[2] >= 1:
-                        print("zouzou" + str(token()[1]))
-                        print("posl" + str(posliste(token1())[0]))
-                        possibilities = posliste(token1())[0]
+                        possibilities = posliste(token1())[0]   # in alignment with the second piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] >= 1 and count(visible['board'])[2] == 0:
-                        print("posl" + str(posliste(token0())[0]))
-                        possibilities = posliste(token0())[0]
+                        possibilities = posliste(token0())[0]   # in alignment with the first piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     else:
-                        print("posL" + str(posliste(token())[0]))
-                        # change poss in filter alligment to 1 piece
                         if count(visible['board'])[1] > count(visible['board'])[2]:
+                            # in alignment with the first piece on the board but not with the second piece on the board
                             possibilities = list(filter(lambda x: x not in posliste(token())[1], posliste(token0())[0]))
                             move['pos'] = random.choice(possibilities)
                             move['nextPiece'] = match(master(_read1(visible['board'])))
                         elif count(visible['board'])[1] == count(visible['board'])[2]:
-                            possibilities = posliste(token())[1]
+                            possibilities = posliste(token())[1]    # in alignment with the two pieces on the board
                             move['pos'] = random.choice(possibilities)
                             move['nextPiece'] = match(master(_read1(visible['board'])))
                         else:
+                            # in alignment with the second piece on the board but not with the first piece on the board
                             possibilities = list(filter(lambda x: x not in posliste(token())[1], posliste(token1())[0]))
                             move['pos'] = random.choice(possibilities)
                             move['nextPiece'] = match(master(_read1(visible['board'])))
 
-                elif count(visible['board'])[0] == 2:  # nombre en commun de cara entre les pièces sur plateau
+                # number of common characteristics between the pieces on the board equals 2
+                elif count(visible['board'])[0] == 2:
+                    # comparison between the common characteristics of each piece on the board and the piecetoplay
                     if count(visible['board'])[1] == 0:
-                        print("zouzou" + str(token()[1]))
-                        print("posl" + str(posliste(token1())[0]))
-                        possibilities = posliste(token1())[0]
+                        possibilities = posliste(token1())[0]   # in alignment with the second piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[2] == 0:
-                        print("posl" + str(posliste(token0())[0]))
-                        possibilities = posliste(token0())[0]
+                        possibilities = posliste(token0())[0]   # in alignment with the second piece on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] == 1 and count(visible['board'])[2] == 1:
-                        print("posL" + str(posliste(token())[1]))
-                        possibilities = posliste(token())[1]
+                        possibilities = posliste(token())[1]    # in alignment with the two pieces on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] == 1 and count(visible['board'])[2] > 1:
-                        print("posl" + str(posliste(token0())[0]))
-                        print("posL" + str(posliste(token())[1]))
+                        # in alignment with the first piece on the board but not with the second piece on the board
                         possibilities = list(
                             filter(lambda x: x not in posliste(token())[1], posliste(token0())[0]))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif count(visible['board'])[1] > 1 and count(visible['board'])[2] == 1:
-                        print("posl" + str(posliste(token1())[0]))
-                        print("posL" + str(posliste(token())[1]))
+                        # in alignment with the second piece on the board but not with the first piece on the board
                         possibilities = list(
                             filter(lambda x: x not in posliste(token())[1], posliste(token1())[0]))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
+                    # Nbr cara between piece 1 and piecetoplay and between piece 2 and piecetoplay greater than 1
                     else:
-                        # Nbr cara between piece 1 and piecetoplay and between piece 2 and piecetoplay greater than 1
-                        print("posl" + str(boarddata2))
-                        print("posL" + str(posliste(token())[0]))
+                        # not in alignment with any of the pieces on the board
                         possibilities = list(filter(lambda x: x not in posliste(token())[0], boarddata2))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
 
-                elif count(visible['board'])[0] == 3:  # nombre en commun de cara entre les pièces sur plateau
+                # number of common characteristics between the pieces on the board equals 3
+                elif count(visible['board'])[0] == 3:
+                    # takes the sum of the common characteristics of each piece on the board and the piecetoplay and
+                    # chooses the moves for each possible outcome for the sum
                     if (count(visible['board'])[1] + count(visible['board'])[2]) == 1:
-                        print("zouzou" + str(token1()))
-                        print("posL" + str(posliste(token())[1]))
-                        possibilities = posliste(token())[1]
+                        possibilities = posliste(token())[1] # in alignment with the two pieces on the board
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
                     elif (count(visible['board'])[1] + count(visible['board'])[2]) == 3:
                         if count(visible['board'])[1] == 2:
-                            print("posl" + str(posliste(token1())[0]))
-                            print("posL" + str(posliste(token())[1]))
+                            # in alignment with the second piece on the board but not with the first piece on the board
                             possibilities = list(
                                 filter(lambda x: x not in posliste(token())[1], posliste(token1())[0]))
                             move['pos'] = random.choice(possibilities)
                             move['nextPiece'] = match(master(_read1(visible['board'])))
                         else:
-                            print("posl" + str(posliste(token0())[0]))
-                            print("posL" + str(posliste(token())[1]))
+                            # in alignment with the first piece on the board but not with the second piece on the board
                             possibilities = list(
                                 filter(lambda x: x not in posliste(token())[1], posliste(token0())[0]))
                             move['pos'] = random.choice(possibilities)
                             move['nextPiece'] = match(master(_read1(visible['board'])))
+                    # thus the sum equals 5
                     else:
-                        print("posl" + str(boarddata2))
-                        print("posL" + str(posliste(token())[0]))
+                        # not in alignment with any of the pieces on the board
                         possibilities = list(filter(lambda x: x not in posliste(token())[0], boarddata2))
                         move['pos'] = random.choice(possibilities)
                         move['nextPiece'] = match(master(_read1(visible['board'])))
 
+            # easyAI comes into place from this moment (x=13)
             if x <= 13:
+                # solve the game and give the Move to do it, id_solve return:
+                #   • Move: Best Move to play for the player.
+                #   • Result: Either 1 (certain victory of the first player) or -1 (certain defeat) or 0 (either draw)
+                #   • Depth: The minimal number of moves before victory (or defeat)
+
+                Result, Depth, move = id_solve(QuartoMind([], state), ai_depths=range(2, 4), win_score=90)
+
+            """if x <= 13:
+                # whenever the first AI_player uses SSS when they are 3 moves left he isn't able to place the lasts
+                # pieces for whatever reason. First time it occured is when we played two SSS(3). And when 3 pieces were
+                # left or less, he wouldnt play anymore. Same thing happens when the first AI_player uses SSS. it stops
+                # playing when number of remainingpieces is equal or less than the argument of SSS
+                # Another problem occured when the first AI_player was Negamax and second SSS, he would choose the wrong
+                # piece at the end, among some choices from which he could have chosen a better option.
                 QuartoMind.ttentry = lambda self: state
-                quarto_algo_neg = Negamax(10, tt=TT(), win_score=90)
-                quarto_algo_sss = SSS(10)
+                quarto_algo_neg = SSS(3, win_score=90)
+                quarto_algo_sss = Negamax(10, win_score=90, tt = TT)
                 Quarto = QuartoMind([AI_Player(quarto_algo_neg), AI_Player(quarto_algo_sss)], state)
                 print(str(Quarto.get_move()))
-                move = Quarto.get_move()
+                move = Quarto.get_move()"""
+
+            """if x <= 13:
+                # doesn't work yet, wrong use of it
+                lowerbond, upperbond = -1000000, 1000000
+                bestvalue = -1000000
+                next = (lambda lowerbond, upperbond, bestvalue: bestvalue)
+                first, Depth, move = mtd(QuartoMind([], state), 100000, next, 4, scoring=90, tt=None)"""
 
 
         # apply the move to check for quarto
@@ -632,7 +645,8 @@ class QuartoMind(TwoPlayersGame):
         liste = []
         visible = self.State._state['visible']
 
-        if visible['board'].count(None) == 1:  # si il n'y a plus qu'une place sur le plateau joue la derniere piece
+        # if there is only one free position left on the board, play the last piece
+        if visible['board'].count(None) == 1:
             liste.append({'pos': visible['board'].index(None), 'nextPiece': 0})
 
         else:
@@ -768,5 +782,5 @@ if __name__ == '__main__':
         QuartoServer(verbose=args.verbose).run()
     elif args.component == 'AI':
         QuartoAI(args.name, (args.host, args.port), verbose=args.verbose)
-    else:
+    elif args.component == 'player':
         QuartoPlayer(args.name, (args.host, args.port), verbose=args.verbose)
