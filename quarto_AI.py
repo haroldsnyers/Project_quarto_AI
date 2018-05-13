@@ -3,9 +3,10 @@
 # Server
 # Author: Quentin Lurkin
 # Version: March 29, 2018
+
 # client AI and player
 # Author: Harold Snyers & Alexandre Seynaeve
-# version:
+# version: May 14, 2018
 
 import argparse
 import random
@@ -641,6 +642,7 @@ class QuartoMind(TwoPlayersGame):
         self.players = players
         self.nplayer = 1
 
+    # structure of the game
     def possible_moves(self):
         liste = []
         visible = self.State._state['visible']
@@ -665,6 +667,7 @@ class QuartoMind(TwoPlayersGame):
                         liste.append(move)
         return liste
 
+    # applying move 
     def make_move(self, move):
         position = move['pos']
         visible = self.State._state['visible']
@@ -674,12 +677,15 @@ class QuartoMind(TwoPlayersGame):
     def win(self):
         return self.State.winner()
 
+    # check if the game is over
     def is_over(self):
         return False if self.win() == -1 else True
-
+    
+    # show the state of the board
     def show(self):
         self.State.prettyprint()
-
+    
+    # verifies the state of the game and returns its status
     def scoring(self):
         Score = self.win()
         if Score == self.nopponent:
