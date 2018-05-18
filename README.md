@@ -24,11 +24,9 @@ To start a new game you will have to open 3 command prompts or terminals and cal
 
 #### The different intelligences
   1. **AI** : the actual intelligence
-  2. **BOT1** : AI to test main AI *(lvl1)   (human + id_solve(2,4))*
-  3. **BOT2** : AI to test main AI *(lvl4)   (human + Negamax(6), SSS(3))*
-  4. **BOT3** : AI to test main AI *(lvl2)   (id_solve(2,4))*
-  5. **BOT4** : AI to test main AI *(lvl3)   (Negamax(6), SSS(3))*
-  6. **player** : to play against the AI or between 2 players
+  2. **BOT1** : AI to test main AI *(lvl2)   (id_solve(2,4))*
+  3. **BOT2** : AI to test main AI *(lvl1)   (Negamax(6), SSS(3))*
+  4. **player** : to play against the AI or between 2 players
 
 #### How to launch a game
 ##### Server
